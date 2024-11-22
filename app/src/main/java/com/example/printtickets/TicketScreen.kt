@@ -47,7 +47,6 @@ fun TicketScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 100.dp)
-
         ) {
             Text(
                 text = stringResource(id = R.string.title_tickets_screen),
