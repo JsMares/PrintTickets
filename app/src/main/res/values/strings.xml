@@ -2,10 +2,13 @@
     <string name="app_name">PrintTickets</string>
 
     <string name="title_tickets_screen">Generador de Tickets</string>
+    <string name="title_bluetooth_screen">Conectar con una impresora</string>
 
     <string name="product_name">Nombre</string>
     <string name="product_price">Precio</string>
     <string name="product_quantity">Cantidad</string>
     <string name="add_product">AGREGAR PRODUCTO</string>
     <string name="print_ticket">IMPRIMIR TICKET</string>
+
+    <string name="search_devices">BUSCAR DISPOSITIVOS</string>
 </resources>
