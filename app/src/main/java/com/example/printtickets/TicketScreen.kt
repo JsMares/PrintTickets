@@ -1,5 +1,6 @@
 package com.example.printtickets
 
+import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,12 +21,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,13 +39,25 @@ import com.example.printtickets.model.Product
 @Preview(showBackground = true)
 @Composable
 fun TicketScreen() {
+    val context = LocalContext.current
+    val dataStore = StoreDevice(context)
+    var device by remember { mutableStateOf<BluetoothDevice?>(null) }
+    val bluetooth = BluetoothCustom()
     var name by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("") }
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .padding(12.dp)) {
+    LaunchedEffect(Unit) {
+        dataStore.getDevice.collect { collectedDevice ->
+            device = collectedDevice
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -86,7 +101,11 @@ fun TicketScreen() {
             ProductsView()
         }
         Button(
-            onClick = { },
+            onClick = {
+                device.let {
+                    bluetooth.connectToPrinter(context, it!!)
+                }
+            },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth(),
@@ -124,4 +143,43 @@ private fun ProductItem(name: String, price: Double, quantity: Int, total: Doubl
             Text(text = "$$total", fontSize = 18.sp)
         }
     }
+}
+
+fun formatTicket(
+    name: String,
+    address: String,
+    numberPhone: String,
+    date: String,
+    time: String,
+    items: List<Product>,
+    total: Double
+): String {
+    val ESC = "\u001B" // ESC code to print commands
+    val NEW_LINE = "\n" // new line
+    val boldOn = "${ESC}E1" // Activar negritas
+    val boldOff = "${ESC}E0" // Desactivar negritas
+    val centerAlign = "${ESC}a1" // Texto centrado
+    val leftAlign = "${ESC}a0" // Alinear a la izquierda
+    val rightAlign = "${ESC}a2" // Alinear a la derecha
+    val divider = "------------------------------"
+
+    val header = """
+        $centerAlign$boldOn$name$boldOff$NEW_LINE
+        $centerAlign$address$NEW_LINE
+        $centerAlign Tel: $numberPhone$NEW_LINE
+        $date     $time$NEW_LINE
+        $divider$NEW_LINE
+    """.trimIndent()
+
+    val itemDetails = items.joinToString(separator = NEW_LINE) { item ->
+        "$leftAlign${item.name.padEnd(20)}${item.quantity} x ${item.price} = ${item.price * item.quantity}"
+    }
+
+    val footer = """
+        $NEW_LINE$divider$NEW_LINE
+        $rightAlign$boldOn TOTAL: $boldOff$total$NEW_LINE
+        Gracias por su compra $NEW_LINE
+    """.trimIndent()
+
+    return header +  itemDetails + footer
 }

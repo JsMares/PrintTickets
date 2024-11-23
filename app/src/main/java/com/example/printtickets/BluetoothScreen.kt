@@ -28,6 +28,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 @Preview(showBackground = true)
@@ -35,6 +38,7 @@ import androidx.compose.ui.unit.sp
 fun BluetoothScreen() {
     val bluetooth = BluetoothCustom()
     val context = LocalContext.current
+    val dataStore = StoreDevice(context)
     val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
     val pairedDevices = remember { mutableStateListOf<BluetoothDevice>() }
     val selectedDevice = remember { mutableStateOf<BluetoothDevice?>(null) }
@@ -80,7 +84,10 @@ fun BluetoothScreen() {
         Button(
             onClick = {
                 selectedDevice.value?.let {  device ->
-                    bluetooth.connectToPrinter(context, device)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        dataStore.saveDevice(device)
+                    }
+                    //bluetooth.connectToPrinter(context, device)
                 }
             },
             modifier = Modifier.fillMaxWidth(),
